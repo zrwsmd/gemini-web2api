@@ -40,33 +40,24 @@ python gemini_web2api.py
 
 兼容 OpenAI 格式，支持所有 OpenAI SDK 和客户端。
 
-```bash
-curl http://localhost:8081/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer sk-your-key" \
-  -d '{"model":"gemini-3.5-flash","messages":[{"role":"user","content":"你好"}]}'
+```cmd
+curl -X POST http://localhost:8081/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer sk-your-key" -d "{\"model\":\"gemini-3.5-flash\",\"messages\":[{\"role\":\"user\",\"content\":\"你好\"}]}"
 ```
 
 ### 2. Claude Messages API
 
 兼容 Anthropic Claude 原生格式，支持 Claude SDK 和工具。
 
-```bash
-curl http://localhost:8081/v1/messages \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer sk-your-key" \
-  -d '{"model":"claude-sonnet-4","max_tokens":200,"messages":[{"role":"user","content":"你好"}]}'
+```cmd
+curl -X POST http://localhost:8081/v1/messages -H "Content-Type: application/json" -H "Authorization: Bearer sk-your-key" -d "{\"model\":\"claude-sonnet-4\",\"max_tokens\":200,\"messages\":[{\"role\":\"user\",\"content\":\"你好\"}]}"
 ```
 
 ### 3. Responses API
 
 兼容 OpenAI Codex/Responses 格式，支持 Codex CLI。
 
-```bash
-curl http://localhost:8081/v1/responses \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer sk-your-key" \
-  -d '{"model":"gemini-3.5-flash","input":"你好"}'
+```cmd
+curl -X POST http://localhost:8081/v1/responses -H "Content-Type: application/json" -H "Authorization: Bearer sk-your-key" -d "{\"model\":\"gemini-3.5-flash\",\"input\":\"你好\"}"
 ```
 
 说明：所有格式都调用 Gemini 后端，模型名会被映射到实际的 Gemini 模型。
@@ -83,11 +74,8 @@ curl http://localhost:8081/v1/responses \
 
 ### curl
 
-```bash
-curl http://localhost:8081/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer sk-your-key" \
-  -d '{"model":"gemini-3.5-flash","messages":[{"role":"user","content":"你好!"}]}'
+```cmd
+curl -X POST http://localhost:8081/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer sk-your-key" -d "{\"model\":\"gemini-3.5-flash\",\"messages\":[{\"role\":\"user\",\"content\":\"你好\"}]}"
 ```
 
 ### OpenAI Python SDK
