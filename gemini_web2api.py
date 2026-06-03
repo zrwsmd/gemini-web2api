@@ -475,6 +475,8 @@ class GeminiHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(length) if length else b""
             if self.path == "/v1/chat/completions":
                 self.handle_chat(body)
+            elif self.path == "/v1/messages":
+                self.handle_claude_messages(body)
             elif self.path == "/v1/responses":
                 self.handle_responses(body)
             elif ":generateContent" in self.path:
@@ -683,6 +685,125 @@ class GeminiHandler(BaseHTTPRequestHandler):
             self.send_json({"id": rid, "object": "response", "created_at": int(time.time()), "status": "completed",
                             "model": model_name, "output": output,
                             "usage": {"input_tokens": len(prompt)//4, "output_tokens": len(text)//4, "total_tokens": (len(prompt)+len(text))//4}})
+
+    def handle_claude_messages(self, body: bytes):
+        """Claude Messages API - converts Claude format to Gemini."""
+        try:
+            req = json.loads(body)
+        except json.JSONDecodeError:
+            self.send_json({"type": "error", "error": {"type": "invalid_request_error", "message": "Invalid JSON"}}, 400)
+            return
+
+        # Extract Claude request parameters
+        claude_model = req.get("model", "claude-3-opus-20240229")
+        max_tokens = req.get("max_tokens", 1024)
+        claude_messages = req.get("messages", [])
+        system_prompt = req.get("system", "")
+        stream = req.get("stream", False)
+
+        # Convert Claude messages to OpenAI format
+        openai_messages = []
+        if system_prompt:
+            openai_messages.append({"role": "system", "content": system_prompt})
+
+        for msg in claude_messages:
+            role = msg.get("role", "user")
+            content = msg.get("content")
+
+            # Handle different content formats
+            if isinstance(content, str):
+                openai_messages.append({"role": role, "content": content})
+            elif isinstance(content, list):
+                # Claude supports content blocks
+                text_parts = []
+                for block in content:
+                    if isinstance(block, dict):
+                        if block.get("type") == "text":
+                            text_parts.append(block.get("text", ""))
+                        elif block.get("type") == "tool_use":
+                            # Handle tool use in assistant messages
+                            pass
+                        elif block.get("type") == "tool_result":
+                            # Handle tool results
+                            pass
+                openai_messages.append({"role": role, "content": " ".join(text_parts)})
+
+        # Use default Gemini model
+        model_name, model_id, think_mode, err = self._resolve_model(CONFIG["default_model"])
+        if err:
+            self.send_json({"type": "error", "error": {"type": "api_error", "message": err}}, 500)
+            return
+
+        # Convert to prompt and call Gemini
+        prompt = messages_to_prompt(openai_messages, None)
+        if not prompt.strip():
+            self.send_json({"type": "error", "error": {"type": "invalid_request_error", "message": "empty messages"}}, 400)
+            return
+
+        msg_id = f"msg_{uuid.uuid4().hex[:24]}"
+
+        try:
+            if stream:
+                # Streaming response
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream")
+                self.send_header("Cache-Control", "no-cache")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+
+                # Send message_start event
+                self.wfile.write(f"event: message_start\ndata: {json.dumps({'type': 'message_start', 'message': {'id': msg_id, 'type': 'message', 'role': 'assistant', 'content': [], 'model': claude_model, 'stop_reason': None, 'usage': {'input_tokens': 0, 'output_tokens': 0}}})}\n\n".encode())
+
+                # Send content_block_start
+                self.wfile.write(f"event: content_block_start\ndata: {json.dumps({'type': 'content_block_start', 'index': 0, 'content_block': {'type': 'text', 'text': ''}})}\n\n".encode())
+                self.wfile.flush()
+
+                # Stream text deltas
+                for delta in gemini_stream_generate_iter(prompt, model_id, think_mode):
+                    if delta:
+                        event = {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": delta}}
+                        self.wfile.write(f"event: content_block_delta\ndata: {json.dumps(event)}\n\n".encode())
+                        self.wfile.flush()
+
+                # Send content_block_stop
+                self.wfile.write(f"event: content_block_stop\ndata: {json.dumps({'type': 'content_block_stop', 'index': 0})}\n\n".encode())
+
+                # Send message_delta with stop_reason
+                self.wfile.write(f"event: message_delta\ndata: {json.dumps({'type': 'message_delta', 'delta': {'stop_reason': 'end_turn', 'stop_sequence': None}, 'usage': {'output_tokens': 0}})}\n\n".encode())
+
+                # Send message_stop
+                self.wfile.write(f"event: message_stop\ndata: {json.dumps({'type': 'message_stop'})}\n\n".encode())
+                self.wfile.flush()
+            else:
+                # Non-streaming response
+                text = gemini_stream_generate(prompt, model_id, think_mode)
+                text = extract_response_text(text)
+
+                # Build Claude response format
+                response = {
+                    "id": msg_id,
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": text or ""}],
+                    "model": claude_model,
+                    "stop_reason": "end_turn",
+                    "stop_sequence": None,
+                    "usage": {
+                        "input_tokens": len(prompt) // 4,
+                        "output_tokens": len(text or "") // 4
+                    }
+                }
+                self.send_json(response)
+
+        except Exception as e:
+            log(f"Claude messages error: {e}")
+            self.send_json({
+                "type": "error",
+                "error": {
+                    "type": "api_error",
+                    "message": str(e)
+                }
+            }, 500)
 
 
     # ─── Google Native API (Gemini CLI compatible) ────────────────────────────
