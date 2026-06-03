@@ -118,6 +118,8 @@ class GeminiHandler(BaseHTTPRequestHandler):
                 self._handle_chat(body)
             elif self.path == "/v1/claude/chat/completions":
                 self._handle_claude_proxy(body)
+            elif self.path == "/v1/messages":
+                self._handle_claude_native(body)
             elif self.path == "/v1/responses":
                 self._handle_responses(body)
             elif ":generateContent" in self.path:
@@ -487,6 +489,81 @@ class GeminiHandler(BaseHTTPRequestHandler):
         except Exception as e:
             log(f"Claude proxy error: {e}")
             self.send_json({"error": {"message": f"Claude proxy error: {str(e)}"}}, 502)
+
+    # ─── /v1/messages (Claude Native API) ────────────────────────────────────
+
+    def _handle_claude_native(self, body: bytes):
+        """Handle Claude native format requests directly."""
+        req = self._parse_body(body)
+        if req is None:
+            self.send_json({"error": {"message": "invalid JSON"}}, 400)
+            return
+
+        # Check if Claude API is configured
+        claude_api_key = CONFIG.get("claude_api_key")
+        if not claude_api_key:
+            self.send_json({"error": {"message": "Claude API key not configured"}}, 500)
+            return
+
+        claude_api_url = CONFIG.get("claude_api_url", "https://api.anthropic.com/v1/messages")
+        is_streaming = req.get("stream", False)
+
+        try:
+            log(f"Claude native API call: {claude_api_url}")
+
+            if is_streaming:
+                # Stream response
+                try:
+                    self._start_sse()
+
+                    stream_lines = call_claude_api(
+                        req,
+                        claude_api_key,
+                        claude_api_url,
+                        timeout=CONFIG.get("request_timeout_sec", 180),
+                        stream=True
+                    )
+
+                    # 直接转发 Claude SSE 流
+                    for line in stream_lines:
+                        self.wfile.write(line.encode() if isinstance(line, str) else line)
+                        self.wfile.write(b"\n")
+                        self.wfile.flush()
+
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                except Exception as e:
+                    log(f"Claude stream error: {e}")
+                    error_event = {
+                        "type": "error",
+                        "error": {
+                            "type": "api_error",
+                            "message": str(e)
+                        }
+                    }
+                    self.wfile.write(f"data: {json.dumps(error_event)}\n\n".encode())
+                    self.wfile.flush()
+            else:
+                # Non-streaming response
+                claude_response = call_claude_api(
+                    req,
+                    claude_api_key,
+                    claude_api_url,
+                    timeout=CONFIG.get("request_timeout_sec", 180),
+                    stream=False
+                )
+
+                self.send_json(claude_response)
+
+        except Exception as e:
+            log(f"Claude native API error: {e}")
+            self.send_json({
+                "type": "error",
+                "error": {
+                    "type": "api_error",
+                    "message": str(e)
+                }
+            }, 502)
 
 
 class ThreadedServer(ThreadingMixIn, HTTPServer):
