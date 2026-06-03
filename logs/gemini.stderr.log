@@ -1,0 +1,16 @@
+[16:14:10] Config loaded: ./config.json
+[16:14:47] "GET / HTTP/1.1" 200 -
+[16:14:48] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:15:16] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:15:28] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:16:46] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:16:46] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:17:11] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:17:27] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:17:27] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:17:52] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:30:38] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:31:02] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:36:25] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:36:37] "POST /v1/chat/completions HTTP/1.1" 200 -
+[16:39:41] "POST /v1/chat/completions HTTP/1.1" 200 -

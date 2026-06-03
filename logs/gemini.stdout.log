@@ -1,0 +1,8 @@
+gemini-web2api v1.1.0
+  Listening: http://0.0.0.0:8081
+  Base URL:  http://localhost:8081/v1
+  Models:    gemini-3.5-flash, gemini-3.5-flash-thinking, gemini-3.1-pro, gemini-auto, gemini-3.5-flash-thinking-lite, gemini-flash-lite
+  Cookie:    none (anonymous)
+  Proxy:     none (uses system env HTTP_PROXY/HTTPS_PROXY)
+  Retry:     3x / 2s
+

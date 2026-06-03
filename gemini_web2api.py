@@ -216,6 +216,14 @@ def gemini_stream_generate(prompt: str, model_id: int, think_mode: int) -> str:
 
 def gemini_stream_generate_iter(prompt: str, model_id: int, think_mode: int):
     """Send prompt and yield incremental text deltas using httpx streaming."""
+    # The Gemini Web streaming connection may stay open on some networks.
+    # Use the buffered endpoint for SSE clients so the local API always closes.
+    raw = gemini_stream_generate(prompt, model_id, think_mode)
+    text = extract_response_text(raw)
+    if text:
+        yield text
+    return
+
     inner = [None] * 80
     inner[0] = [prompt, 0, None, None, None, None, 0]
     inner[1] = ["en"]
