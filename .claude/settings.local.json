@@ -24,7 +24,9 @@
       "Bash(git commit *)",
       "Bash(git remote *)",
       "Bash(git branch *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(py test_anthropic_converter.py)",
+      "Bash(py test_claude_proxy.py)"
     ]
   }
 }

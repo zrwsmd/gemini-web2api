@@ -13,5 +13,7 @@
   ],
   "cookie_file": null,
   "proxy": null,
-  "log_requests": true
+  "log_requests": true,
+  "claude_api_key": null,
+  "claude_api_url": "https://api.anthropic.com/v1/messages"
 }

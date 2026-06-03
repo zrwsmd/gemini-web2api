@@ -8,10 +8,13 @@
 
 将 Google Gemini 网页端转换为 OpenAI 兼容 API. 零认证, 零成本, 跨平台.
 
+**🆕 新功能**: 现已支持 OpenAI 到 Claude API 格式转换！[查看详情](#claude-代理功能新)
+
 ## 特性
 
 - **可选密钥**: `api_keys` 为空时免密, 填入密钥后按 OpenAI Bearer Key 校验
 - **OpenAI 兼容**: 直接替换 `/v1/chat/completions` 和 `/v1/models`
+- **Claude 代理**: 支持将 OpenAI 格式转换为 Claude API 格式（新增）
 - **工具调用**: 完整的 Function Calling 支持 (OpenAI 格式)
 - **多模型**: Flash, Flash Thinking (2万字+输出), Pro, Auto, Lite
 - **思考深度**: 通过 `@think=N` 后缀调节 (0=最深, 4=最浅)
@@ -212,6 +215,48 @@ python gemini_web2api.py
 ```
 
 支持 Clash, V2Ray, Shadowsocks 等任何 HTTP 代理.
+
+## Claude 代理功能（新）
+
+本项目现在支持将 OpenAI 格式请求转换为 Anthropic Claude API 格式，让你可以用相同的 OpenAI SDK 调用 Claude 模型。
+
+### 配置方法
+
+在 config.json 中添加 Claude API Key：
+
+```json
+{
+  "claude_api_key": "sk-ant-api03-xxxxx",
+  "claude_api_url": "https://api.anthropic.com/v1/messages"
+}
+```
+
+### 使用方法
+
+**端点 1: Gemini（免费）**
+```bash
+curl http://localhost:8081/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-gemini" \
+  -d '{"model":"gemini-3.5-flash","messages":[{"role":"user","content":"你好"}]}'
+```
+
+**端点 2: Claude（通过代理）**
+```bash
+curl http://localhost:8081/v1/claude/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-gemini" \
+  -d '{"model":"gpt-4","messages":[{"role":"user","content":"你好"}]}'
+```
+
+### 模型自动映射
+
+| OpenAI 模型 | 转换为 Claude 模型 |
+|------------|-------------------|
+| gpt-4 | claude-sonnet-4-20250514 |
+| gpt-3.5-turbo | claude-3-5-haiku-20241022 |
+
+详细文档请查看：[CLAUDE_PROXY_README.md](CLAUDE_PROXY_README.md)
 
 ## 已知限制
 

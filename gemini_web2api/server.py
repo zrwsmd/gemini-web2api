@@ -11,6 +11,8 @@ from .models import MODELS, resolve_model
 from .gemini import generate, generate_stream, log
 from .tools import messages_to_prompt, parse_tool_calls, google_contents_to_prompt, parse_google_function_calls
 from .multimodal import upload_image, fetch_image_bytes
+from .anthropic_converter import convert_openai_to_claude, convert_claude_to_openai
+from .claude_proxy import call_claude_api, convert_claude_stream_to_openai
 from . import __version__
 
 
@@ -114,6 +116,8 @@ class GeminiHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(length) if length else b""
             if self.path == "/v1/chat/completions":
                 self._handle_chat(body)
+            elif self.path == "/v1/claude/chat/completions":
+                self._handle_claude_proxy(body)
             elif self.path == "/v1/responses":
                 self._handle_responses(body)
             elif ":generateContent" in self.path:
@@ -406,6 +410,83 @@ class GeminiHandler(BaseHTTPRequestHandler):
             self.wfile.flush()
         else:
             self.send_json(response_obj)
+
+    # ─── /v1/claude/chat/completions (Claude Proxy) ──────────────────────────
+
+    def _handle_claude_proxy(self, body: bytes):
+        """Handle OpenAI format requests and proxy to Claude API."""
+        req = self._parse_body(body)
+        if req is None:
+            self.send_json({"error": {"message": "invalid JSON"}}, 400)
+            return
+
+        # Check if Claude API is configured
+        claude_api_key = CONFIG.get("claude_api_key")
+        if not claude_api_key:
+            self.send_json({"error": {"message": "Claude API key not configured"}}, 500)
+            return
+
+        claude_api_url = CONFIG.get("claude_api_url", "https://api.anthropic.com/v1/messages")
+        original_model = req.get("model", "gpt-4")
+        is_streaming = req.get("stream", False)
+
+        try:
+            # Convert OpenAI request to Claude format
+            claude_request = convert_openai_to_claude(req)
+            log(f"Proxying to Claude API: {claude_api_url}")
+
+            if is_streaming:
+                # Stream response
+                try:
+                    self._start_sse()
+                    chat_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
+
+                    stream_lines = call_claude_api(
+                        claude_request,
+                        claude_api_key,
+                        claude_api_url,
+                        timeout=CONFIG.get("request_timeout_sec", 180),
+                        stream=True
+                    )
+
+                    for chunk in convert_claude_stream_to_openai(stream_lines, original_model, chat_id):
+                        self.wfile.write(chunk.encode())
+                        self.wfile.flush()
+
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                except Exception as e:
+                    log(f"Claude stream error: {e}")
+                    error_chunk = {
+                        "id": f"chatcmpl-{uuid.uuid4().hex[:12]}",
+                        "object": "chat.completion.chunk",
+                        "created": int(time.time()),
+                        "model": original_model,
+                        "choices": [{
+                            "index": 0,
+                            "delta": {"content": f"Error: {str(e)}"},
+                            "finish_reason": "stop"
+                        }]
+                    }
+                    self.wfile.write(f"data: {json.dumps(error_chunk)}\n\n".encode())
+                    self.wfile.write(b"data: [DONE]\n\n")
+                    self.wfile.flush()
+            else:
+                # Non-streaming response
+                claude_response = call_claude_api(
+                    claude_request,
+                    claude_api_key,
+                    claude_api_url,
+                    timeout=CONFIG.get("request_timeout_sec", 180),
+                    stream=False
+                )
+
+                openai_response = convert_claude_to_openai(claude_response, original_model)
+                self.send_json(openai_response)
+
+        except Exception as e:
+            log(f"Claude proxy error: {e}")
+            self.send_json({"error": {"message": f"Claude proxy error: {str(e)}"}}, 502)
 
 
 class ThreadedServer(ThreadingMixIn, HTTPServer):
