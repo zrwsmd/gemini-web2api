@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import httpx; print\\('httpx version:', httpx.__version__\\)\")",
+      "Bash(py --version)",
+      "Bash(py -c \"import httpx; print\\('httpx 已安装, 版本:', httpx.__version__\\)\")",
+      "Bash(py -m pip install httpx)",
+      "Bash(py gemini_web2api.py)",
+      "Bash(curl -s http://localhost:8081/)",
+      "Bash(curl -s http://localhost:8081/v1/models)",
+      "Bash(py -m json.tool)",
+      "Bash(curl -s http://localhost:8081/v1/models -H \"Authorization: Bearer sk-gemini\")",
+      "Bash(py -m pip list)",
+      "Bash(py -m pip install openai)",
+      "Bash(py -m pip install openai --target=./lib --no-cache-dir)",
+      "Bash(py test_example.py)",
+      "Bash(curl -s -X POST http://localhost:8081/v1/chat/completions -H \"Content-Type: application/json\" -H \"Authorization: Bearer sk-gemini\" -d \"{\\\\\"model\\\\\":\\\\\"gemini-3.5-flash\\\\\",\\\\\"messages\\\\\":[{\\\\\"role\\\\\":\\\\\"user\\\\\",\\\\\"content\\\\\":\\\\\"你好\\\\\"}]}\")",
+      "Bash(curl -s -I https://gemini.google.com --connect-timeout 5)",
+      "Bash(py quick_test.py)",
+      "Bash(py demo.py)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)"
+    ]
+  }
+}
