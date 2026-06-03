@@ -32,6 +32,45 @@ python gemini_web2api.py
 
 服务启动在 `http://localhost:8081/v1`.
 
+## 支持的 API 格式
+
+本项目支持三种主流 API 格式，全部调用免费的 Gemini 后端：
+
+### 1. OpenAI Chat Completions API
+
+兼容 OpenAI 格式，支持所有 OpenAI SDK 和客户端。
+
+```bash
+curl http://localhost:8081/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-your-key" \
+  -d '{"model":"gemini-3.5-flash","messages":[{"role":"user","content":"你好"}]}'
+```
+
+### 2. Claude Messages API
+
+兼容 Anthropic Claude 原生格式，支持 Claude SDK 和工具。
+
+```bash
+curl http://localhost:8081/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-your-key" \
+  -d '{"model":"claude-sonnet-4","max_tokens":200,"messages":[{"role":"user","content":"你好"}]}'
+```
+
+### 3. Responses API
+
+兼容 OpenAI Codex/Responses 格式，支持 Codex CLI。
+
+```bash
+curl http://localhost:8081/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-your-key" \
+  -d '{"model":"gemini-3.5-flash","input":"你好"}'
+```
+
+说明：所有格式都调用 Gemini 后端，模型名会被映射到实际的 Gemini 模型。
+
 ## 客户端配置
 
 ### Cherry Studio / ChatBox / 任何 OpenAI 兼容客户端
