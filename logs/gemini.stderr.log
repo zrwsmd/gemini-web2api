@@ -1,16 +1,25 @@
-[16:14:10] Config loaded: ./config.json
-[16:14:47] "GET / HTTP/1.1" 200 -
-[16:14:48] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:15:16] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:15:28] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:16:46] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:16:46] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:17:11] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:17:27] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:17:27] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:17:52] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:30:38] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:31:02] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:36:25] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:36:37] "POST /v1/chat/completions HTTP/1.1" 200 -
-[16:39:41] "POST /v1/chat/completions HTTP/1.1" 200 -
+[09:10:15] Config loaded: ./config.json
+[09:11:56] Retry 1/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:12:19] Retry 2/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:12:42] "POST /v1/chat/completions HTTP/1.1" 502 -
+[09:13:04] Retry 1/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:13:27] Retry 2/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:13:50] "POST /v1/chat/completions HTTP/1.1" 502 -
+[09:14:12] Retry 1/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:14:35] Retry 2/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:14:58] "POST /v1/chat/completions HTTP/1.1" 502 -
+[09:16:55] Retry 1/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:17:18] Retry 2/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:17:42] "POST /v1/chat/completions HTTP/1.1" 502 -
+[09:18:03] Retry 1/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:18:26] Retry 2/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:18:49] "POST /v1/chat/completions HTTP/1.1" 502 -
+[09:19:11] Retry 1/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:19:34] Retry 2/3: <urlopen error [WinError 10060] 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。>
+[09:19:57] "POST /v1/chat/completions HTTP/1.1" 502 -
+[10:40:48] "POST /v1/chat/completions HTTP/1.1" 200 -
+[10:41:02] "POST /v1/chat/completions HTTP/1.1" 200 -
+[10:41:02] "POST /v1/chat/completions HTTP/1.1" 200 -
+[10:41:27] "POST /v1/chat/completions HTTP/1.1" 200 -
+[10:41:28] Stream error: [WinError 10053] 你的主机中的软件中止了一个已建立的连接。
+[10:41:29] Stream error: [WinError 10053] 你的主机中的软件中止了一个已建立的连接。
