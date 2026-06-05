@@ -1,0 +1,272 @@
+gemini-web2api 三种常用 API 格式调用示例
+=========================================
+
+当前项目主要支持下面三种格式：
+
+1. OpenAI Chat Completions API
+   路径: POST /v1/chat/completions
+   本地地址: http://127.0.0.1:8081/v1/chat/completions
+
+2. OpenAI Responses API
+   路径: POST /v1/responses
+   本地地址: http://127.0.0.1:8081/v1/responses
+
+3. Anthropic Claude Messages API
+   路径: POST /v1/messages
+   gemini-web2api 直连地址: http://127.0.0.1:8081/v1/messages
+   Claude Code 推荐地址: http://127.0.0.1:8082/v1/messages
+
+注意:
+
+- 路径是 /v1/messages，不是 /v1/message。
+- 8081 是 gemini-web2api。
+- 8082 是 claude-code-proxy，推荐 Claude Code 使用 8082。
+- Authorization 里的 sk-gemini 是本地配置的 api_keys，不是 Google API Key。
+- 实际模型上游仍然是 Gemini Web。
+
+
+一、OpenAI Chat Completions API
+------------------------------
+
+用途:
+
+- OpenAI SDK
+- Cherry Studio
+- ChatBox
+- 大多数 OpenAI-compatible 客户端
+
+请求地址:
+
+http://127.0.0.1:8081/v1/chat/completions
+
+cmd curl 示例:
+
+curl -X POST http://127.0.0.1:8081/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer sk-gemini" -d "{\"model\":\"gemini-3.5-flash\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with exactly: CHAT_OK\"}]}"
+
+预期返回:
+
+{
+  "id": "chatcmpl-...",
+  "object": "chat.completion",
+  "model": "gemini-3.5-flash",
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "CHAT_OK"
+      },
+      "finish_reason": "stop"
+    }
+  ]
+}
+
+OpenAI Python SDK 示例:
+
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://127.0.0.1:8081/v1",
+    api_key="sk-gemini",
+)
+
+resp = client.chat.completions.create(
+    model="gemini-3.5-flash",
+    messages=[
+        {"role": "user", "content": "Reply with exactly: CHAT_SDK_OK"}
+    ],
+)
+
+print(resp.choices[0].message.content)
+
+流式 curl 示例:
+
+curl -N -X POST http://127.0.0.1:8081/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer sk-gemini" -d "{\"model\":\"gemini-3.5-flash\",\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"Reply with exactly: CHAT_STREAM_OK\"}]}"
+
+
+二、OpenAI Responses API
+-----------------------
+
+用途:
+
+- OpenAI Responses 格式客户端
+- Codex CLI 风格集成
+- 需要 /v1/responses 的工具
+
+请求地址:
+
+http://127.0.0.1:8081/v1/responses
+
+cmd curl 示例:
+
+curl -X POST http://127.0.0.1:8081/v1/responses -H "Content-Type: application/json" -H "Authorization: Bearer sk-gemini" -d "{\"model\":\"gemini-3.5-flash\",\"input\":\"Reply with exactly: RESPONSES_OK\"}"
+
+预期返回:
+
+{
+  "id": "resp_...",
+  "object": "response",
+  "status": "completed",
+  "model": "gemini-3.5-flash",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "RESPONSES_OK"
+        }
+      ]
+    }
+  ]
+}
+
+带 instructions 示例:
+
+curl -X POST http://127.0.0.1:8081/v1/responses -H "Content-Type: application/json" -H "Authorization: Bearer sk-gemini" -d "{\"model\":\"gemini-3.5-flash\",\"instructions\":\"You are concise.\",\"input\":\"Reply with exactly: RESPONSES_INSTRUCTIONS_OK\"}"
+
+流式 Responses 示例:
+
+curl -N -X POST http://127.0.0.1:8081/v1/responses -H "Content-Type: application/json" -H "Authorization: Bearer sk-gemini" -d "{\"model\":\"gemini-3.5-flash\",\"stream\":true,\"input\":\"Reply with exactly: RESPONSES_STREAM_OK\"}"
+
+
+三、Anthropic Claude Messages API
+--------------------------------
+
+用途:
+
+- Claude Code
+- Anthropic Messages API 风格客户端
+- 需要 /v1/messages 的工具
+
+推荐请求地址:
+
+http://127.0.0.1:8082/v1/messages
+
+说明:
+
+- 8082 是 claude-code-proxy。
+- Claude Code 推荐连 8082。
+- 8082 会把 Claude Messages 格式转换为 OpenAI Chat Completions 格式，再转发到 8081。
+
+cmd curl 示例:
+
+curl -X POST http://127.0.0.1:8082/v1/messages -H "Content-Type: application/json" -H "Authorization: Bearer sk-gemini" -d "{\"model\":\"gemini-3.5-flash\",\"max_tokens\":128,\"messages\":[{\"role\":\"user\",\"content\":\"Reply with exactly: MESSAGES_OK\"}]}"
+
+预期返回:
+
+{
+  "id": "chatcmpl-...",
+  "type": "message",
+  "role": "assistant",
+  "model": "gemini-3.5-flash",
+  "content": [
+    {
+      "type": "text",
+      "text": "MESSAGES_OK"
+    }
+  ],
+  "stop_reason": "end_turn"
+}
+
+Claude Code 本地环境变量:
+
+PowerShell:
+
+$env:ANTHROPIC_BASE_URL="http://127.0.0.1:8082"
+$env:ANTHROPIC_API_KEY="sk-gemini"
+$env:ANTHROPIC_AUTH_TOKEN="sk-gemini"
+$env:ANTHROPIC_MODEL="gemini-3.5-flash"
+
+claude --model gemini-3.5-flash
+
+Claude Code 非交互测试:
+
+claude -p "Reply with exactly: CLAUDE_CODE_OK" --model gemini-3.5-flash
+
+流式 Messages 示例:
+
+curl -N -X POST http://127.0.0.1:8082/v1/messages -H "Content-Type: application/json" -H "Authorization: Bearer sk-gemini" -d "{\"model\":\"gemini-3.5-flash\",\"max_tokens\":128,\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"Reply with exactly: MESSAGES_STREAM_OK\"}]}"
+
+
+四、三个接口怎么选
+----------------
+
+1. 普通 OpenAI 客户端
+
+使用:
+
+http://127.0.0.1:8081/v1/chat/completions
+
+客户端 Base URL:
+
+http://127.0.0.1:8081/v1
+
+
+2. OpenAI Responses / Codex 风格客户端
+
+使用:
+
+http://127.0.0.1:8081/v1/responses
+
+
+3. Claude Code
+
+使用:
+
+http://127.0.0.1:8082/v1/messages
+
+Claude Code Base URL:
+
+http://127.0.0.1:8082
+
+
+五、常见错误
+------------
+
+1. curl: Failed to connect to 127.0.0.1 port 8082
+
+说明:
+
+8082 没有监听，ClaudeCodeProxy 服务没启动。
+
+检查:
+
+Get-Service ClaudeCodeProxy
+Get-NetTCPConnection -LocalPort 8082
+
+
+2. upstream error: WinError 10061
+
+说明:
+
+服务本身启动了，但上游连接被拒绝。
+常见原因是 gemini-web2api 配置了代理 http://127.0.0.1:10808，但代理软件没开。
+
+检查:
+
+Get-NetTCPConnection -LocalPort 10808
+
+
+3. invalid api key
+
+说明:
+
+Authorization 和 config.json / .env 里的 key 不一致。
+
+当前本地默认:
+
+Authorization: Bearer sk-gemini
+
+
+4. 502 upstream error
+
+说明:
+
+8082 能收到请求，但 8081 或 Gemini Web 上游失败。
+
+检查:
+
+curl http://127.0.0.1:8081/
+curl http://127.0.0.1:8082/health -H "Authorization: Bearer sk-gemini"
+
